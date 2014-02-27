@@ -1,49 +1,95 @@
 package visualization
 
-import scala.io.Source
-import conway.Cell
+import swing._
+import java.awt.Color
 import conway.Simulation
+import conway.Cell
 
-object Launcher {
-
-    def main(args: Array[String]): Unit = {
-        // read in file of booleans
-      println("Following is the content read:" )
-
-      Source.fromFile(args(0)).foreach{ 
-         print
-      }
-//      val lines:Iterator[String] = Source.fromFile(args(0)).getLines()
-      val boolgrid:Array[Array[Boolean]] = 
-          (for {
-              line <- Source.fromFile(args(0)).getLines()
-           } yield bools(line)).toArray
-           
-//      val cells = for {
-//          (row, r) <- boolgrid.zipWithIndex
-//          (truth, c) <- row.zipWithIndex
-//      } yield new Cell(r, c, truth)
-      
-      val grid:Array[Array[Cell]] = for ((row, r) <- boolgrid.zipWithIndex)
-          yield for ((truth, c) <- row.zipWithIndex) 
-          yield new Cell(r, c, truth)
-      
-      var sim:Simulation = new Simulation(grid)
-      println
-      println(sim)
-      sim = sim.step2
-      println
-      println(sim)
+object Launcher extends SimpleSwingApplication {
+    var sim:Option[Simulation] = None
+    
+    override def startup(args:Array[String]):Unit = {
+        args.length match {
+	        case 1 => sim = Some(Simulation.fromFile(args(0)))
+	        case 2 => sim = Some(Simulation.random(args(0).toInt, args(1).toInt, 0.3))
+	        case 3 => sim = Some(Simulation.random(args(0).toInt, args(1).toInt, args(2).toFloat))
+	        case _ => sim = Some(Simulation.random(15, 10, 0.3))
+        }
+        super.startup(args)
     }
-    /**
-     * Remove whitespace from T F strings and convert to booleans
-     */
-    def bools(str:String):Array[Boolean] = {
-        // break into chars, filter out non 'T' or 'F' chars
-        val filtered = str.filter(c => (c == 'T' || c == 'F'))
-        (filtered.map(c => c match {
-            case 'T' => true
-            case _ => false
-        })).toArray
-    }
+    
+    def top = new MainFrame {
+    	var simulation = sim match {
+    	    case None => throw new IllegalArgumentException("invalid args")
+    	    case Some(s) => s
+    	}
+//	    title = "Conway's Game of Life"
+	    // width, height - not sure why I need both of these, but without first, grid doesn't
+	    // display, and without second, app starts as the size of the buttons
+	    size = new Dimension(600,500)
+	    preferredSize = new Dimension(600,500)
+	    val buffer = 20
+	    val exitButton = new Button(Action("Exit")( quit )) { text = "Exit" }
+	    val goButton =   new Button(Action("Start")( go ))  { text = "Go"   }
+	    val stepButton = new Button(Action("Step")( step )) { text = "Step" }
+	    val stopButton = new Button(Action("Stop")( stop )) { text = "Stop" }
+	    val buttonPanel = new BoxPanel(Orientation.Horizontal) {
+	        contents += goButton
+	    	contents += exitButton
+	    	contents += stopButton
+	    	contents += stepButton
+	    }
+	    val cellSize:Int = {
+    		// max pixel size of a grid point
+	        val max = 80
+	        val h = size.getHeight().toInt - buffer
+	        val w = size.getWidth().toInt - buffer
+	        val n = simulation.board.size
+	        List(h/n, w/n, max).min
+	    }
+	    val gridPanel = new Panel {
+			override def paint(g : Graphics2D) {
+				g.setPaint(Color.WHITE)
+				g.fillRect(0, 0, size.width, size.height)
+				// iterate through grid and fill each live grid point
+				// step thru and fillRect
+				// fill location computed from cell.x, cell.y
+				for (row <- simulation.board) {
+				    row.foreach {
+				        // fill each active each cell, draw grid for others
+				        c => { if (c.alive) {
+  					        	  g.setPaint(Color.BLACK)
+						          g.fillRect(c.col*cellSize + buffer
+						            		,c.row*cellSize + buffer,  cellSize, cellSize)
+						       }
+				               g.setPaint(Color.LIGHT_GRAY)
+				               g.drawRect(c.col*cellSize + buffer, c.row*cellSize + buffer
+				                  , cellSize, cellSize) }
+				    }
+				}
+			}
+	    }
+
+	    contents = new BoxPanel(Orientation.Vertical) {
+	        contents += gridPanel
+	        contents += buttonPanel
+	    }
+	    listenTo(exitButton, goButton, stepButton, stopButton)
+//	    listenTo(goButton)
+//	    listenTo(stepButton)
+//	    listenTo(stopButton)
+	    
+	   def step = {
+	       simulation = simulation.step2
+	       gridPanel.repaint()
+	   }
+       def go = timer.start
+       def stop = timer.stop
+       val timer=new javax.swing.Timer(250, Swing.ActionListener(e =>
+		{
+			step
+		}
+		))
+   }
+
 }

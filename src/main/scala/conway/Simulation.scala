@@ -1,6 +1,7 @@
 package conway
 
 import scala.util.Random
+import scala.io.Source
 
 object Simulation {
     // TODO should I seed random?
@@ -13,6 +14,35 @@ object Simulation {
             } yield new Cell(i, j, rand.nextDouble() < freq)
         } yield row.toArray).toArray
         new Simulation(board)
+    }
+    
+    def fromFile(file:String):Simulation = {
+	    /**
+	     * Remove whitespace from T F strings and convert to booleans
+	     */
+	    def bools(str:String):Array[Boolean] = {
+	        // break into chars, filter out non 'T' or 'F' chars
+	        val filtered = str.filter(c => (c == 'T' || c == 'F'))
+	        (filtered.map(c => c match {
+	            case 'T' => true
+	            case _ => false
+	        })).toArray
+	    }
+		/**
+		 * Read truth grid from file
+		 */
+		val boolgrid:Array[Array[Boolean]] = 
+				(for {
+					line <- Source.fromFile(file).getLines()
+				} yield bools(line)).toArray
+		/**
+		 * Transform truth grid into Simulation grid
+		 */
+		val grid:Array[Array[Cell]] = for ((row, r) <- boolgrid.zipWithIndex)
+			yield for ((truth, c) <- row.zipWithIndex) 
+				yield new Cell(r, c, truth)
+      
+        new Simulation(grid)
     }
 }
 
@@ -68,13 +98,9 @@ class Simulation(grid:Array[Array[Cell]]) {
 	 * returns printable version
 	 */
 	override def toString:String = {
-//	    def arrStr(acc:String, cells:Array[Cell]):String = 
-//	        cells.foldLeft(acc)(cellStr) + "\n"
-	    def cellStr(acc:String, cell:Cell):String = {
+	    def cellStr(acc:String, cell:Cell):String =
 	        if (cell.alive) acc + "T"
 	        else acc + "F"
-	    }
 	    (for (arr <- grid) yield arr.foldLeft("")(cellStr)).mkString("\n")
-//	    grid.foldLeft("")(arrStr)
 	}
 }
