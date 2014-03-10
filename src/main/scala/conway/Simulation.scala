@@ -18,11 +18,11 @@ object Simulation {
     
     def fromFile(file:String):Simulation = {
 	    /**
-	     * Remove whitespace from T F strings and convert to booleans
+	     * Remove whitespace from T F,. strings and convert to booleans
 	     */
 	    def bools(str:String):Array[Boolean] = {
 	        // break into chars, filter out non 'T' or 'F' chars
-	        val filtered = str.filter(c => (c == 'T' || c == 'F'))
+	        val filtered = str.filter(c => (c == 'T' || c == '.' || c == 'F'))
 	        (filtered.map(c => c match {
 	            case 'T' => true
 	            case _ => false
@@ -32,9 +32,8 @@ object Simulation {
 		 * Read truth grid from file
 		 */
 		val boolgrid:Array[Array[Boolean]] = 
-				(for {
-					line <- Source.fromFile(file).getLines()
-				} yield bools(line)).toArray
+            (for (line <- Source.fromFile(file).getLines())
+                yield bools(line)).toArray
 		/**
 		 * Transform truth grid into Simulation grid
 		 */
@@ -48,23 +47,23 @@ object Simulation {
 
 class Simulation(grid:Array[Array[Cell]]) {
     var board = grid
-    /**
-     * Takes a board and transitions it to the next step in life
-     */
-	def step:Unit = {
-	    board = for (cols <- board) yield for (cell <- cols) yield cellStep(cell, board)
-	}
-	def step2:Simulation = {
-	    val grid = for (cols <- board) yield for (cell <- cols) yield cellStep(cell, board)
-	    new Simulation(grid)
-	}
 	val sizeX = board.size
 	val sizeY = board(0).size
+    val count = board.flatten.foldLeft(0)(
+            (acc,cell) => if (cell.alive) acc + 1 else acc)
+    /**
+     * Transitions this Simulation to the next step in life
+     */
+	def step:Simulation = {
+	    val grid = for (rows <- board) yield for (cell <- rows) 
+	        			yield cellStep(cell)
+	    new Simulation(grid)
+	}
 	/**
 	 * Provides the cell to transition to given a cell and a board
 	 */
-	def cellStep(cell:Cell, board:Array[Array[Cell]]):Cell = {
-	    val count = numLivingNeighbors(cell, board)
+	private def cellStep(cell:Cell):Cell = {
+	    val count = numLivingNeighbors(cell)
         if (!cell.alive && count == 3)
             new Cell(cell.row, cell.col, true)
         else if (cell.alive && (count < 2 || count >3))
@@ -76,12 +75,12 @@ class Simulation(grid:Array[Array[Cell]]) {
 	/**
 	 * Returns the number of living neighbors adjacent to the Cell on the Board
 	 */
-	def numLivingNeighbors(cell:Cell, board:Array[Array[Cell]]) = {
+	def numLivingNeighbors(cell:Cell) = {
 	    val neigh = neighbors(cell) 
 	    neigh.map(pt => board(pt._1)(pt._2)).filter(c => c.alive).size
 	}
 	/**
-	 * Returns all 8 neighbors in this Toroid
+	 * Returns all 8 neighbors in this torus
 	 */
 	def neighbors(cell:Cell) = (for {
 		i <- cell.row - 1 to cell.row + 1
@@ -99,8 +98,8 @@ class Simulation(grid:Array[Array[Cell]]) {
 	 */
 	override def toString:String = {
 	    def cellStr(acc:String, cell:Cell):String =
-	        if (cell.alive) acc + "T"
-	        else acc + "F"
+	        if (cell.alive) acc + "T "
+	        else acc + ". "
 	    (for (arr <- grid) yield arr.foldLeft("")(cellStr)).mkString("\n")
 	}
 }
