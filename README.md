@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/andreafey/conway.svg)](https://travis-ci.org/andreafey/conway)
+
 # Conway's Game of Life
 
 This is a Scala implementation of Conway's Game of Life in a toroid. I am working on a machine-learning component which predictively attempts 
