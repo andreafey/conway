@@ -6,7 +6,7 @@ This is a Scala implementation of Conway's Game of Life in a toroid. Eventually 
 
 ## Notes
 
-Rules for the Game of Life can be found at <http://en.wikipedia.org/wiki/Conway's_Game_of_Life>.
+Rules for the Game of Life can be found at http://en.wikipedia.org/wiki/Conway's_Game_of_Life.
 
 Because the life environment is a toroid, border cells have influence and are influenced by their parallel edges. So cells in the left-most column are adjacent to cells in the right-most column in the same row; likewise with the top and bottom rows. 
 
