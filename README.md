@@ -2,7 +2,7 @@
 
 # Conway's Game of Life
 
-This is a Scala implementation of Conway's Game of Life in a toroid. Eventually I would like to work on a machine-learning component which predictively attempts to step through time in the past (inspired by a [Kaggle competition](http://www.kaggle.com/c/conway-s-reverse-game-of-life).
+This is a Scala implementation of Conway's Game of Life in a toroid. Eventually I would like to work on a machine-learning component which predictively attempts to step through time in the past (inspired by a [Kaggle competition](http://www.kaggle.com/c/conway-s-reverse-game-of-life).)
 
 ## Notes
 
